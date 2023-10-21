@@ -1,12 +1,11 @@
+function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
 
-function sFOM(A, b, f, num_it, trunc_len, mgs, sketch, ex)
-
-    # TODO: Implement stopping crit
     # Function performing the sFOM iters, returns vec of errors, and final approx
 
     # Initializations
     N = size(A, 1);
     err_vec = zeros(num_it);
+    final_it = num_it;
 
     # Allocate for truncated Krylov basis
     V = zeros(ComplexF64, N, trunc_len);
@@ -27,8 +26,9 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, sketch, ex)
     Vfull = zeros(ComplexF64, N, num_it+1);
     Vfull[:,1] = v;
 
-    # init approx
+    # init approx, ym
     approx = zeros(3);
+    ym = 0;
 
     # Do sFOM iters
     for m = 1:num_it
@@ -67,6 +67,11 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, sketch, ex)
         # Whiten basis
         SVw, SAVw, Rw = whitenBasis(view(SV,:,1:m), view(SAV,:,1:m));
 
+        # Save previous approx
+        if m >= 2
+            ym_prev = ym;
+        end
+
         # Compute sFOM approximant
         SVm = SVw;
         M = SVm'*SVm;
@@ -75,9 +80,31 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, sketch, ex)
         ym = (Rw\coeffs);
         approx = view(Vfull,:,1:m)*ym;
 
-        err_vec[m] = norm(approx-ex);
+        # Get errors
+        if ex != false
+            err_vec[m] = norm(approx-ex);
+        end
+
+        # Evaluate stopping criterion 
+        if m > 2
+
+            stop_crit = norm(Vfull[:,m]) / norm(SV[:,m]);
+            stop_crit *= norm( SV[:,1:m]*(ym - vcat(ym_prev, 0)) );
+
+            if stop_crit < iter_diff_tol
+                final_it = m;
+                err_vec = err_vec[1:m];
+                break
+            end
+
+        end
+
 
     end
 
-    return err_vec, approx;
+    if ex == false
+        err_vec = false;
+    end
+
+    return err_vec, approx, final_it;
 end
