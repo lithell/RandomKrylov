@@ -89,7 +89,7 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
         if m > 2
 
             stop_crit = norm(Vfull[:,m]) / norm(SV[:,m]);
-            stop_crit *= norm( SV[:,1:m]*(ym - vcat(ym_prev, 0)) );
+            stop_crit *= norm(SV[:,1:m]*(ym - vcat(ym_prev, 0)));
 
             if stop_crit < iter_diff_tol
                 final_it = m;
