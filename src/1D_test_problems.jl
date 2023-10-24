@@ -4,6 +4,9 @@ include("sFOM.jl")
 include("setupSketchingHandle.jl")
 include("whitenBasis.jl")
 
+# Seed for reproducability
+Random.seed!(1);
+
 # Define problem 
 N = 100;
 M = 350;

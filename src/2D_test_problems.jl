@@ -4,6 +4,9 @@ include("sFOM.jl")
 include("setupSketchingHandle.jl")
 include("whitenBasis.jl")
 
+# Seed for reproducability
+Random.seed!(1);
+
 # define problem 
 N = 100; # assume dx = dy
 M = 250;
@@ -39,14 +42,14 @@ source = vec(source);
 G(U) = A*U + source; # 2D heat eq.
 
 # Jacobian
-J(U) = A;
+J(U) = A; # 2D heat eq.
 
 # φ-function
 φ(X) = X\(exp(X) - sparse(I, size(X)));
 
 
 # set params for sFOM
-num_it = min(Int(round(0.4*(N-1)*(N-1))), 100); 
+num_it = min(Int(round(0.4*(N-1)*(N-1))), 200); 
 trunc_len = 4;
 mgs = true;
 iter_diff_tol = 10^(-9);
@@ -62,7 +65,8 @@ for i in 1:M
 
     global solvec;
 
-    _, matfunceval, _ = sFOM(k*J(solvec), G(solvec), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex);
+    _, matfunceval, final_it = sFOM(k*J(solvec), G(solvec), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex);
+    display(final_it)
 
     solvec = solvec + k*matfunceval;
 

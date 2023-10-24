@@ -26,9 +26,9 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
     Vfull = zeros(ComplexF64, N, num_it+1);
     Vfull[:,1] = v;
 
-    # init approx, ym
+    # init approx, qm
     approx = zeros(3);
-    ym = 0;
+    qm = 0;
 
     # Do sFOM iters
     for m = 1:num_it
@@ -69,7 +69,7 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
 
         # Save previous approx
         if m >= 2
-            ym_prev = ym;
+            qm_prev = qm;
         end
 
         # Compute sFOM approximant
@@ -77,8 +77,8 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
         M = SVm'*SVm;
 
         coeffs = M\( f((SVm'*SAVw)/M)*(SVm'*sketch(b)) );
-        ym = (Rw\coeffs);
-        approx = view(Vfull,:,1:m)*ym;
+        qm = (Rw\coeffs);
+        approx = view(Vfull,:,1:m)*qm;
 
         # Get errors
         if ex != false
@@ -89,7 +89,7 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
         if m > 2
 
             stop_crit = norm(Vfull[:,m]) / norm(SV[:,m]);
-            stop_crit *= norm(SV[:,1:m]*(ym - vcat(ym_prev, 0)));
+            stop_crit *= norm(SV[:,1:m]*(qm - vcat(qm_prev, 0)));
 
             if stop_crit < iter_diff_tol
                 final_it = m;
