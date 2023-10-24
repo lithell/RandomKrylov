@@ -53,13 +53,10 @@ iter_diff_tol = 10^(-9);
 # setup sketching
 sketch = setupSketchingHandle(N-1, 2*num_it);
 
-# don't evaluate errors (notice that if ex != false, an exact sol needs to be supplied!)
-ex = false;
-
 # do iters
 for i in 1:M
 
-    _, matfunceval, _ = sFOM(k*J(solmat[i,:]), G(solmat[i,:]), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex);
+    matfunceval, _, _ = sFOM(k*J(solmat[i,:]), G(solmat[i,:]), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch);
 
     solmat[i+1,:] = solmat[i,:] + k*matfunceval;
 

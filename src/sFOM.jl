@@ -1,11 +1,26 @@
-function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
+"""
+    sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch)
 
-    # Function performing the sFOM iters, returns vec of errors, and final approx
+Compute the sFOM approximation `fₘ≈f(A)b`.
+
+# Arguments
+- `A::Matrix`
+- `b::Vector`
+- `f::Function`
+- `num_it::Int` Max number of iterations
+- `trunc_len::Int` Arnoldi truncation length
+- `mgs::Bool` Use MGS orthogonalization, otherwise use GS
+- `iter_diff_tol::Float` Iteration-difference tolerance
+- `sketch::Function` Sketching function in sFOM
+"""
+function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch)
+
+    # Convergence flag
+    conv_flag = -1;
 
     # Initializations
     N = size(A, 1);
-    err_vec = zeros(num_it);
-    final_it = num_it;
+    iter_diff = zeros(num_it);
 
     # Allocate for truncated Krylov basis
     V = zeros(ComplexF64, N, trunc_len);
@@ -27,7 +42,7 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
     Vfull[:,1] = v;
 
     # init approx, qm
-    approx = zeros(3);
+    approx = zeros(size(b));
     qm = 0;
 
     # Do sFOM iters
@@ -72,39 +87,35 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex)
             qm_prev = qm;
         end
 
-        # Compute sFOM approximant
+        # Compute sFOM qₘ
         SVm = SVw;
         M = SVm'*SVm;
-
         coeffs = M\( f((SVm'*SAVw)/M)*(SVm'*sketch(b)) );
         qm = (Rw\coeffs);
-        approx = view(Vfull,:,1:m)*qm;
-
-        # Get errors
-        if ex != false
-            err_vec[m] = norm(approx-ex);
-        end
 
         # Evaluate stopping criterion 
-        if m > 2
+        if m >= 2
 
             stop_crit = norm(Vfull[:,m]) / norm(SV[:,m]);
             stop_crit *= norm(SV[:,1:m]*(qm - vcat(qm_prev, 0)));
+            iter_diff[m] = stop_crit;
 
             if stop_crit < iter_diff_tol
-                final_it = m;
-                err_vec = err_vec[1:m];
-                break
+
+                # Compute full approx
+                approx = view(Vfull,:,1:m)*qm;
+                iter_diff = iter_diff[1:m];
+                conv_flag = 1;
+
+                return approx, conv_flag, iter_diff;
             end
 
         end
 
-
     end
 
-    if ex == false
-        err_vec = false;
-    end
+    approx = view(Vfull,:,1:num_it)*qm;
+    
+    return approx, conv_flag, iter_diff;
 
-    return err_vec, approx, final_it;
 end

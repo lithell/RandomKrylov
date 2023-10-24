@@ -49,7 +49,7 @@ J(U) = A; # 2D heat eq.
 
 
 # set params for sFOM
-num_it = min(Int(round(0.4*(N-1)*(N-1))), 200); 
+num_it = min(Int(round(0.4*(N-1)*(N-1))), 400); 
 trunc_len = 4;
 mgs = true;
 iter_diff_tol = 10^(-9);
@@ -57,16 +57,12 @@ iter_diff_tol = 10^(-9);
 # setup sketching
 sketch = setupSketchingHandle((N-1)*(N-1), 2num_it);
 
-# don't evaluate errors (notice that if ex != false, an exact sol needs to be supplied!)
-ex = false;
-
 # do iters
 for i in 1:M
 
     global solvec;
 
-    _, matfunceval, final_it = sFOM(k*J(solvec), G(solvec), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch, ex);
-    display(final_it)
+    matfunceval, _, _ = sFOM(k*J(solvec), G(solvec), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch);
 
     solvec = solvec + k*matfunceval;
 
