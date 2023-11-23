@@ -1,26 +1,9 @@
-"""
-    sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch)
-
-Compute the sFOM approximation `fₘ≈f(A)b`.
-
-# Arguments
-- `A::Matrix`
-- `b::Vector`
-- `f::Function`
-- `num_it::Int` Max number of iterations
-- `trunc_len::Int` Arnoldi truncation length
-- `mgs::Bool` Use MGS orthogonalization, otherwise use GS
-- `iter_diff_tol::Float` Iteration-difference tolerance
-- `sketch::Function` Sketching function in sFOM
-"""
-function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch)
-
-    # Convergence flag
-    conv_flag = -1;
+function gen_iter_diff_vec(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch)
 
     # Initializations
     N = size(A, 1);
     iter_diff = zeros(num_it);
+    approx_diff = zeros(num_it);
 
     # Allocate for truncated Krylov basis
     V = zeros(ComplexF64, N, trunc_len);
@@ -85,6 +68,7 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch)
         # Save previous approx
         if m >= 2
             qm_prev = qm;
+            approx_prev = approx;
         end
 
         # Compute sFOM qₘ
@@ -96,26 +80,19 @@ function sFOM(A, b, f, num_it, trunc_len, mgs, iter_diff_tol, sketch)
         # Evaluate stopping criterion 
         if m >= 2
 
+            approx = view(Vfull,:,1:m)*qm;
+            approx_diff[m] = norm(approx-approx_prev);
+
             stop_crit = 1 / norm(SV[:,m]);
             stop_crit *= norm(SV[:,1:m]*(qm - vcat(qm_prev, 0)));
             iter_diff[m] = stop_crit;
-
-            if stop_crit < iter_diff_tol
-
-                # Compute full approx
-                approx = view(Vfull,:,1:m)*qm;
-                iter_diff = iter_diff[1:m];
-                conv_flag = 1;
-
-                return approx, conv_flag, iter_diff;
-            end
 
         end
 
     end
 
-    approx = view(Vfull,:,1:num_it)*qm;
     
-    return approx, conv_flag, iter_diff;
+    return approx_diff[2:end], iter_diff[2:end];
 
 end
+

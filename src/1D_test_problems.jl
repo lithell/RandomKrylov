@@ -1,4 +1,4 @@
-using LinearAlgebra, SparseArrays, FFTW, Random, Plots
+using LinearAlgebra, SparseArrays, FFTW, Random, Plots, LaTeXStrings
 
 include("sFOM.jl")
 include("setupSketchingHandle.jl")
@@ -27,19 +27,19 @@ u0 = sin.(4*pi*int_vec);
 solmat = zeros(M+1, N-1);
 solmat[1,:] = u0;
 
-# Disc mat
+# Disc matW
 rows = vcat(1:(N-1), 1:(N-2), 2:(N-1));
 cols = vcat(1:(N-1), 2:(N-1) ,1:(N-2));
 vals = vcat(-2*ones(N-1), ones(N-2), ones(N-2));
 T = 1/h^2*sparse(rows, cols, vals);
 
 # RHS
-#G(U) = T*U  + 1 ./(1 .+ U.^2); # ostermann problem 
-G(U) = T*U; # 1D heat eq.
+G(U) = T*U  + 1 ./(1 .+ U.^2); # ostermann problem 
+#G(U) = T*U; # 1D heat eq.
 
 # Jacobian 
-#J(U) = T + sparse(1:(N-1), 1:(N-1), -2*U ./(1 .+ U.^2).^2); # ostermann problem 
-J(U) = T; # 1D heat eq.
+J(U) = T + sparse(1:(N-1), 1:(N-1), -2*U ./(1 .+ U.^2).^2); # ostermann problem 
+#J(U) = T; # 1D heat eq.
 
 # φ-function
 φ(X) = X\(exp(X)-sparse(I, size(X)));
@@ -56,7 +56,7 @@ sketch = setupSketchingHandle(N-1, 2*num_it);
 # do iters
 for i in 1:M
 
-    matfunceval, _, _ = sFOM(k*J(solmat[i,:]), G(solmat[i,:]), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch);
+    matfunceval, _, iter_diff = sFOM(k*J(solmat[i,:]), G(solmat[i,:]), φ, num_it, trunc_len, mgs, iter_diff_tol, sketch);
 
     solmat[i+1,:] = solmat[i,:] + k*matfunceval;
 
@@ -67,8 +67,11 @@ solmat = hcat(zeros(M+1), solmat, zeros(M+1));
 
 # plot sol
 hm = heatmap(x0:h:x1, t0:k:t1, solmat,
-            color=:thermal
-            )
-xlabel!("x")
-ylabel!("t")
+            color=:thermal, 
+            framestyle=:box
+            ) 
+plot!(size=(600,600))
+xlabel!(L"$x$")
+ylabel!(L"$t$")
+title!("sFOM on the Ostermann Problem")
 display(hm)

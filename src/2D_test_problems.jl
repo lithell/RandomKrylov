@@ -35,7 +35,7 @@ T = 1/h^2*sparse(rows, cols, vals);
 
 A = kron(sparse(I,N-1,N-1), T) + kron(T, sparse(I,N-1,N-1));
 
-# RHS
+# RHSQuasi
 f(x,y) = 20exp(-40sqrt((x-0.3)^2 + (y-0.3)^2)) + 20exp(-40sqrt((x-0.7)^2 + (y-0.7)^2)); # arbitrary sum of "point-sources"
 source = [f(x,y) for x in xvec, y in yvec];
 source = vec(source);
